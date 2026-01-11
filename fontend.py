@@ -95,22 +95,95 @@ def save_setting(key, value):
         json.dump(settings, f, ensure_ascii=False, indent=2)
 
 
-# ===== GUI =====
+def update_path_hint(label_widget, path, kind):
+    """Update compact hint label showing the selected file/folder name."""
+    if not path:
+        label_widget.config(text="Chưa chọn", fg="#7f8fa6")
+        return
+    base = os.path.basename(path.rstrip("/\\"))
+    prefix = "📄" if kind == "file" else "📁"
+    label_widget.config(text=f"{prefix} {base}", fg="#dcdde1")
+
+
+###############################################################################
+# GUI
+###############################################################################
 root = tk.Tk()
-root.title("Excel Automation Tool")
-root.geometry("700x400")
-root.configure(bg="#f5f6fa")
+root.title("Excel Metadata Tool")
+root.geometry("820x520")
+root.configure(bg="#0b1d2c")
+# Window icon (optional if app.ico exists)
+icon_path = os.path.join(os.path.dirname(__file__), "app.ico")
+if os.path.exists(icon_path):
+    try:
+        root.iconbitmap(icon_path)
+    except Exception:
+        pass
 
-LABEL_FONT = ("Segoe UI", 11, "bold")
-ENTRY_FONT = ("Segoe UI", 11)
-BUTTON_FONT = ("Segoe UI", 11, "bold")
-BUTTON_COLOR = "#00a8ff"
-BUTTON_FG = "#fff"
+# Palette & fonts
+BG = "#0b1d2c"
+CARD_BG = "#0f2536"
+PANEL_BG = "#102b42"
+ACCENT = "#00c4a7"
+ACCENT_DARK = "#0c9c85"
+TEXT_MAIN = "#e8f1f8"
+TEXT_SUB = "#9fb3c8"
 
-header = tk.Label(root, text="Excel Metadata Tool", font=("Segoe UI", 18, "bold"), fg="#273c75", bg="#f5f6fa")
-header.grid(row=0, column=0, columnspan=4, pady=(18, 10), sticky="nsew")
+TITLE_FONT = ("Bahnschrift", 20, "bold")
+SUBTITLE_FONT = ("Bahnschrift", 12)
+LABEL_FONT = ("Bahnschrift", 11, "bold")
+ENTRY_FONT = ("Bahnschrift", 11)
+BUTTON_FONT = ("Bahnschrift", 11, "bold")
+
+# ttk styling
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("Card.TFrame", background=CARD_BG)
+style.configure("Accent.TButton", font=BUTTON_FONT, foreground="#0b1d2c", background=ACCENT)
+style.map("Accent.TButton", background=[("active", ACCENT_DARK)], foreground=[("disabled", "#4c5a68")])
+style.configure("Ghost.TButton", font=BUTTON_FONT, foreground=TEXT_MAIN, background=PANEL_BG, borderwidth=0, focusthickness=0)
+style.map("Ghost.TButton", background=[("active", CARD_BG)])
+style.configure(
+    "Outline.TButton",
+    font=BUTTON_FONT,
+    foreground=TEXT_MAIN,
+    background=CARD_BG,
+    bordercolor=TEXT_MAIN,
+    focusthickness=2,
+    focuscolor=TEXT_MAIN,
+    relief="solid"
+)
+style.map(
+    "Outline.TButton",
+    background=[("active", PANEL_BG)],
+    foreground=[("disabled", "#7f8fa6")],
+    bordercolor=[("active", TEXT_MAIN)]
+)
+style.configure("Success.Horizontal.TProgressbar", troughcolor=PANEL_BG, background=ACCENT, bordercolor=PANEL_BG, lightcolor=ACCENT, darkcolor=ACCENT_DARK)
 
 settings = load_settings()
+
+# Hero header
+header_frame = tk.Frame(root, bg=PANEL_BG, padx=20, pady=16)
+header_frame.grid(row=0, column=0, columnspan=4, sticky="nsew")
+header_row = tk.Frame(header_frame, bg=PANEL_BG)
+header_row.pack(anchor="w")
+hero_icon = tk.Canvas(header_row, width=30, height=30, bg=PANEL_BG, highlightthickness=0)
+hero_icon.create_oval(4, 4, 26, 26, fill=ACCENT, outline=ACCENT)
+hero_icon.create_text(15, 15, text="GS", fill=PANEL_BG, font=("Bahnschrift", 9, "bold"))
+hero_icon.pack(side="left", padx=(0,10))
+title_lbl = tk.Label(header_row, text="Excel Metadata Tool", font=TITLE_FONT, fg=TEXT_MAIN, bg=PANEL_BG)
+title_lbl.pack(side="left", anchor="w")
+subtitle_lbl = tk.Label(header_frame, text="Tự động hóa xuất barcode & metadata", font=SUBTITLE_FONT, fg=TEXT_SUB, bg=PANEL_BG)
+subtitle_lbl.pack(anchor="w", pady=(6,0))
+
+# Main card
+card = ttk.Frame(root, style="Card.TFrame", padding=20)
+card.grid(row=1, column=0, columnspan=4, padx=24, pady=(14, 10), sticky="nsew")
+
+# Layout helpers
+card.grid_columnconfigure(1, weight=1)
+card.grid_columnconfigure(3, weight=0)
 
 # Source (file or folder)
 def browse_source(entry, key):
@@ -124,86 +197,86 @@ def browse_source(entry, key):
         save_setting(key, path)
 
 
-
 # Source file row
-
-# Giảm khoảng cách dọc (pady=4 thay vì 10)
-source_file_label = tk.Label(root, text="Source File", font=LABEL_FONT, bg="#f5f6fa")
-source_file_label.grid(row=1, column=0, padx=(30,10), pady=4, sticky="e")
-source_file_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-source_file_entry.grid(row=1, column=1, padx=5, pady=4, sticky="ew")
+source_file_label = tk.Label(card, text="Source File", font=LABEL_FONT, fg=TEXT_MAIN, bg=CARD_BG)
+source_file_label.grid(row=0, column=0, padx=(10,10), pady=6, sticky="e")
+source_file_entry = tk.Entry(card, width=48, font=ENTRY_FONT, bg="#0d2d44", fg=TEXT_MAIN, relief="flat", insertbackground=TEXT_MAIN)
+source_file_entry.grid(row=0, column=1, padx=6, pady=6, sticky="ew")
 source_file_entry.insert(0, settings.get("source_file", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_source_file(source_file_entry, "source_file")).grid(row=1, column=2, padx=(5,30), pady=4, sticky="w")
+ttk.Button(card, text="Browse", width=10, style="Outline.TButton", command=lambda: [browse_source_file(source_file_entry, "source_file"), update_path_hint(source_file_hint, source_file_entry.get(), "file")]).grid(row=0, column=2, padx=(8,10), pady=6, sticky="w")
+source_file_hint = tk.Label(card, text="", font=("Bahnschrift", 10), fg=TEXT_SUB, bg=CARD_BG, anchor="w")
+source_file_hint.grid(row=0, column=3, padx=(6,8), sticky="w")
+update_path_hint(source_file_hint, source_file_entry.get(), "file")
 
 # Source folder row
-
-source_folder_label = tk.Label(root, text="Source Folder", font=LABEL_FONT, bg="#f5f6fa")
-source_folder_label.grid(row=2, column=0, padx=(30,10), pady=4, sticky="e")
-source_folder_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-source_folder_entry.grid(row=2, column=1, padx=5, pady=4, sticky="ew")
+source_folder_label = tk.Label(card, text="Source Folder", font=LABEL_FONT, fg=TEXT_MAIN, bg=CARD_BG)
+source_folder_label.grid(row=1, column=0, padx=(10,10), pady=6, sticky="e")
+source_folder_entry = tk.Entry(card, width=48, font=ENTRY_FONT, bg="#0d2d44", fg=TEXT_MAIN, relief="flat", insertbackground=TEXT_MAIN)
+source_folder_entry.grid(row=1, column=1, padx=6, pady=6, sticky="ew")
 source_folder_entry.insert(0, settings.get("source_folder", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_source_folder(source_folder_entry, "source_folder")).grid(row=2, column=2, padx=(5,30), pady=4, sticky="w")
+ttk.Button(card, text="Browse", width=10, style="Outline.TButton", command=lambda: [browse_source_folder(source_folder_entry, "source_folder"), update_path_hint(source_folder_hint, source_folder_entry.get(), "folder")]).grid(row=1, column=2, padx=(8,10), pady=6, sticky="w")
+source_folder_hint = tk.Label(card, text="", font=("Bahnschrift", 10), fg=TEXT_SUB, bg=CARD_BG, anchor="w")
+source_folder_hint.grid(row=1, column=3, padx=(6,8), sticky="w")
+update_path_hint(source_folder_hint, source_folder_entry.get(), "folder")
 
 # Template row
-
-template_label = tk.Label(root, text="Template File", font=LABEL_FONT, bg="#f5f6fa")
-template_label.grid(row=3, column=0, padx=(30,10), pady=4, sticky="e")
-template_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-template_entry.grid(row=3, column=1, padx=5, pady=4, sticky="ew")
+template_label = tk.Label(card, text="Template File", font=LABEL_FONT, fg=TEXT_MAIN, bg=CARD_BG)
+template_label.grid(row=2, column=0, padx=(10,10), pady=6, sticky="e")
+template_entry = tk.Entry(card, width=48, font=ENTRY_FONT, bg="#0d2d44", fg=TEXT_MAIN, relief="flat", insertbackground=TEXT_MAIN)
+template_entry.grid(row=2, column=1, padx=6, pady=6, sticky="ew")
 template_entry.insert(0, settings.get("template", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_file(template_entry, "template")).grid(row=3, column=2, padx=(5,30), pady=4, sticky="w")
+ttk.Button(card, text="Browse", width=10, style="Outline.TButton", command=lambda: [browse_file(template_entry, "template"), update_path_hint(template_hint, template_entry.get(), "file")]).grid(row=2, column=2, padx=(8,10), pady=6, sticky="w")
+template_hint = tk.Label(card, text="", font=("Bahnschrift", 10), fg=TEXT_SUB, bg=CARD_BG, anchor="w")
+template_hint.grid(row=2, column=3, padx=(6,8), sticky="w")
+update_path_hint(template_hint, template_entry.get(), "file")
 
 # Output row
-
-output_label = tk.Label(root, text="Output Folder", font=LABEL_FONT, bg="#f5f6fa")
-output_label.grid(row=4, column=0, padx=(30,10), pady=4, sticky="e")
-output_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-output_entry.grid(row=4, column=1, padx=5, pady=4, sticky="ew")
+output_label = tk.Label(card, text="Output Folder", font=LABEL_FONT, fg=TEXT_MAIN, bg=CARD_BG)
+output_label.grid(row=3, column=0, padx=(10,10), pady=6, sticky="e")
+output_entry = tk.Entry(card, width=48, font=ENTRY_FONT, bg="#0d2d44", fg=TEXT_MAIN, relief="flat", insertbackground=TEXT_MAIN)
+output_entry.grid(row=3, column=1, padx=6, pady=6, sticky="ew")
 output_entry.insert(0, settings.get("output", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_folder(output_entry, "output")).grid(row=4, column=2, padx=(5,30), pady=4, sticky="w")
+ttk.Button(card, text="Browse", width=10, style="Outline.TButton", command=lambda: [browse_folder(output_entry, "output"), update_path_hint(output_hint, output_entry.get(), "folder")]).grid(row=3, column=2, padx=(8,10), pady=6, sticky="w")
+output_hint = tk.Label(card, text="", font=("Bahnschrift", 10), fg=TEXT_SUB, bg=CARD_BG, anchor="w")
+output_hint.grid(row=3, column=3, padx=(6,8), sticky="w")
+update_path_hint(output_hint, output_entry.get(), "folder")
 
 
-
-# Progress bar
-
+# Progress bar centered
 progress_var = tk.DoubleVar()
-progress_bar = ttk.Progressbar(root, variable=progress_var, maximum=100, length=500)
-progress_bar.grid(row=5, column=0, columnspan=2, padx=30, pady=(10, 0), sticky="ew")
-# Thêm label hiển thị phần trăm
-progress_percent_label = tk.Label(root, text="0%", font=("Segoe UI", 11, "bold"), bg="#f5f6fa")
-progress_percent_label.grid(row=5, column=2, padx=(5, 0), pady=(10, 0), sticky="w")
+progress_start_time = 0
+progress_frame = tk.Frame(card, bg=CARD_BG)
+progress_frame.grid(row=4, column=0, columnspan=4, pady=(16, 4))
+progress_bar = ttk.Progressbar(progress_frame, variable=progress_var, maximum=100, length=420, style="Success.Horizontal.TProgressbar")
+progress_bar.pack(side="left", padx=(0,8))
+progress_percent_label = tk.Label(progress_frame, text="0%", font=("Bahnschrift", 11, "bold"), fg=TEXT_MAIN, bg=CARD_BG)
+progress_percent_label.pack(side="left")
+elapsed_time_label = tk.Label(progress_frame, text="0.0s", font=("Bahnschrift", 10), fg=TEXT_SUB, bg=CARD_BG)
+elapsed_time_label.pack(side="left", padx=(10,0))
 
 
-# Button frame for Convert buttons
-button_frame = tk.Frame(root, bg="#f5f6fa")
-button_frame.grid(row=6, column=0, columnspan=4, pady=(10, 0))
+# Button frame for Convert buttons (centered)
+button_frame = tk.Frame(card, bg=CARD_BG)
+button_frame.grid(row=5, column=0, columnspan=4, pady=(10, 0))
 
-convert_file_btn = tk.Button(button_frame, text="Convert File", font=("Segoe UI", 13, "bold"), bg="#44bd32", fg="#fff", width=16, command=lambda: run_process_with_progress('file'))
-convert_file_btn.pack(side="left", padx=20)
+ttk.Button(button_frame, text="Convert File", style="Accent.TButton", width=16, command=lambda: run_process_with_progress('file')).pack(side="left", padx=14, pady=4)
+ttk.Button(button_frame, text="Convert Folder", style="Accent.TButton", width=16, command=lambda: run_process_with_progress('folder')).pack(side="left", padx=14, pady=4)
 
-convert_folder_btn = tk.Button(button_frame, text="Convert Folder", font=("Segoe UI", 13, "bold"), bg="#273c75", fg="#fff", width=16, command=lambda: run_process_with_progress('folder'))
-convert_folder_btn.pack(side="left", padx=20)
-
-# Open Output Folder button (hidden by default) - Đặt riêng ở dòng 7
+# Open Output Folder button (hidden by default)
 def open_output_folder():
-    import os
-    import subprocess
     folder = output_entry.get()
     if os.path.isdir(folder):
         os.startfile(folder)
 
-open_folder_btn = tk.Button(root, text="Open Output Folder", font=("Segoe UI", 11, "bold"), bg="#00a8ff", fg="#fff", command=open_output_folder)
-open_folder_btn.grid(row=7, column=0, columnspan=4, pady=(6, 0))
+open_folder_btn = ttk.Button(root, text="Open Output Folder", style="Accent.TButton", command=open_output_folder)
+open_folder_btn.grid(row=2, column=0, columnspan=4, pady=(4, 0))
 open_folder_btn.grid_remove()
 
+# Footer
+footer = tk.Label(root, text="Gene Solutions • Automation", font=("Bahnschrift", 10), fg=TEXT_SUB, bg=BG)
+footer.grid(row=3, column=0, columnspan=4, pady=(8, 12))
 
-# Dời footer xuống dòng 6
-
-# Dời footer xuống dòng 8
-footer = tk.Label(root, text="Gene Solutions - Automation", font=("Segoe UI", 10), fg="#718093", bg="#f5f6fa")
-footer.grid(row=8, column=0, columnspan=4, pady=(10, 0), sticky="nsew")
-
-root.grid_columnconfigure(1, weight=1)
+root.grid_columnconfigure(0, weight=1)
 
 # --- Progress logic ---
 import threading
@@ -213,6 +286,9 @@ import time
 def update_progress(percent):
     progress_var.set(percent)
     progress_percent_label.config(text=f"{int(percent)}%")
+    if progress_start_time:
+        elapsed = time.time() - progress_start_time
+        elapsed_time_label.config(text=f"{elapsed:.1f}s")
     root.update_idletasks()
 
 
@@ -221,11 +297,13 @@ def run_process_with_progress(mode):
     progress_var.set(0)
     open_folder_btn.grid_remove()
     def task():
+        global progress_start_time
         try:
+            progress_start_time = time.time()
             # Simulate progress in 1% increments for smoother UI
             for i in range(0, 100):
                 update_progress(i)
-                time.sleep(0.01)
+                time.sleep(0.05)
             # Only run the process when progress is at 99%
             if mode == 'file':
                 run_process()
