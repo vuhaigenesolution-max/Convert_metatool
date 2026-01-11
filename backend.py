@@ -13,6 +13,34 @@ def process_excel(source_path, template_path, output_path):
     wb_source = load_workbook(source_path, data_only=True)
     sheet_name = wb_source.sheetnames[0]
     ws = wb_source[sheet_name]
+    h14_value = ws["H14"].value
+    if h14_value is None or str(h14_value).strip() == "":
+        raise ValueError("Ô H14 trong file nguồn đang trống, không thể tạo barcode header.")
+    h14_str = str(h14_value).strip()
+    parts = h14_str.split('_')
+    run_name = None
+    for p in parts:
+        if p.upper().startswith('R') and p[1:].isdigit():
+            run_name = p.upper()
+            break
+    if run_name is None:
+        raise ValueError("Không tìm thấy Run name dạng Rxxx trong ô H14.")
+    if len(parts) >= 2:
+        run_date = f"{parts[-2]}_{parts[-1]}"
+    else:
+        run_date = h14_str
+    # Clean filename parts to avoid invalid characters
+    cleaned_run_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in run_name)
+    safe_run_name = cleaned_run_name.upper()
+    if not safe_run_name.startswith('R'):
+        safe_run_name = f"R{safe_run_name}"
+    if safe_run_name.strip('_') == "":
+        raise ValueError("Run name không hợp lệ sau khi làm sạch (safe_run_name rỗng).")
+    safe_run_date = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in run_date)
+    barcode_name = h14_str
+    safe_folder_name = "".join('_' if c in '<>:"/\\|?*' else c for c in h14_str).strip()
+    if safe_folder_name == "":
+        raise ValueError("Giá trị H14 không hợp lệ để đặt tên thư mục sau khi làm sạch.")
     values = []
     row = 22
     while True:
@@ -52,13 +80,16 @@ def process_excel(source_path, template_path, output_path):
 
     # 4. Tạo file CSV với 3 dòng đầu và dán result_df từ dòng 4
     rows = [
-        ['#barcodeName', 'T72_C_R8772_MGI_25_12'],
+        ['#barcodeName', barcode_name],
         ['#misMatch1', 0],
         ['#misMatch2', 0]
     ]
-    current_date = datetime.now().strftime('%Y%m%d')
-    csv_filename = f'barcode_header_{current_date}.csv'
-    csv_path = os.path.join(output_path, csv_filename)
+    csv_filename = f'barcode_{safe_run_name}.csv'
+    target_folder = os.path.join(output_path, barcode_name)
+    os.makedirs(target_folder, exist_ok=True)
+    csv_path = os.path.join(target_folder, csv_filename)
+    if os.path.exists(csv_path):
+        raise FileExistsError(f"File đã tồn tại: {csv_path}. Vui lòng xóa hoặc đổi tên trước khi chạy lại.")
     with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(rows)

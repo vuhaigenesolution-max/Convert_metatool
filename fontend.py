@@ -126,45 +126,55 @@ def browse_source(entry, key):
 
 
 # Source file row
+
+# Giảm khoảng cách dọc (pady=4 thay vì 10)
 source_file_label = tk.Label(root, text="Source File", font=LABEL_FONT, bg="#f5f6fa")
-source_file_label.grid(row=1, column=0, padx=(30,10), pady=10, sticky="e")
+source_file_label.grid(row=1, column=0, padx=(30,10), pady=4, sticky="e")
 source_file_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-source_file_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
+source_file_entry.grid(row=1, column=1, padx=5, pady=4, sticky="ew")
 source_file_entry.insert(0, settings.get("source_file", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_source_file(source_file_entry, "source_file")).grid(row=1, column=2, padx=(5,30), pady=10, sticky="w")
+tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_source_file(source_file_entry, "source_file")).grid(row=1, column=2, padx=(5,30), pady=4, sticky="w")
 
 # Source folder row
+
 source_folder_label = tk.Label(root, text="Source Folder", font=LABEL_FONT, bg="#f5f6fa")
-source_folder_label.grid(row=2, column=0, padx=(30,10), pady=10, sticky="e")
+source_folder_label.grid(row=2, column=0, padx=(30,10), pady=4, sticky="e")
 source_folder_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-source_folder_entry.grid(row=2, column=1, padx=5, pady=10, sticky="ew")
+source_folder_entry.grid(row=2, column=1, padx=5, pady=4, sticky="ew")
 source_folder_entry.insert(0, settings.get("source_folder", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_source_folder(source_folder_entry, "source_folder")).grid(row=2, column=2, padx=(5,30), pady=10, sticky="w")
+tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_source_folder(source_folder_entry, "source_folder")).grid(row=2, column=2, padx=(5,30), pady=4, sticky="w")
 
 # Template row
+
 template_label = tk.Label(root, text="Template File", font=LABEL_FONT, bg="#f5f6fa")
-template_label.grid(row=3, column=0, padx=(30,10), pady=10, sticky="e")
+template_label.grid(row=3, column=0, padx=(30,10), pady=4, sticky="e")
 template_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-template_entry.grid(row=3, column=1, padx=5, pady=10, sticky="ew")
+template_entry.grid(row=3, column=1, padx=5, pady=4, sticky="ew")
 template_entry.insert(0, settings.get("template", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_file(template_entry, "template")).grid(row=3, column=2, padx=(5,30), pady=10, sticky="w")
+tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_file(template_entry, "template")).grid(row=3, column=2, padx=(5,30), pady=4, sticky="w")
 
 # Output row
+
 output_label = tk.Label(root, text="Output Folder", font=LABEL_FONT, bg="#f5f6fa")
-output_label.grid(row=4, column=0, padx=(30,10), pady=10, sticky="e")
+output_label.grid(row=4, column=0, padx=(30,10), pady=4, sticky="e")
 output_entry = tk.Entry(root, width=48, font=ENTRY_FONT)
-output_entry.grid(row=4, column=1, padx=5, pady=10, sticky="ew")
+output_entry.grid(row=4, column=1, padx=5, pady=4, sticky="ew")
 output_entry.insert(0, settings.get("output", ""))
-tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_folder(output_entry, "output")).grid(row=4, column=2, padx=(5,30), pady=10, sticky="w")
+tk.Button(root, text="Browse", font=BUTTON_FONT, bg=BUTTON_COLOR, fg=BUTTON_FG, command=lambda: browse_folder(output_entry, "output")).grid(row=4, column=2, padx=(5,30), pady=4, sticky="w")
 
 
 
 # Progress bar
+
 progress_var = tk.DoubleVar()
 progress_bar = ttk.Progressbar(root, variable=progress_var, maximum=100, length=500)
-progress_bar.grid(row=5, column=0, columnspan=3, padx=30, pady=(10, 0), sticky="ew")
+progress_bar.grid(row=5, column=0, columnspan=2, padx=30, pady=(10, 0), sticky="ew")
+# Thêm label hiển thị phần trăm
+progress_percent_label = tk.Label(root, text="0%", font=("Segoe UI", 11, "bold"), bg="#f5f6fa")
+progress_percent_label.grid(row=5, column=2, padx=(5, 0), pady=(10, 0), sticky="w")
 
-# Button frame for better alignment (dời xuống dòng 6)
+
+# Button frame for Convert buttons
 button_frame = tk.Frame(root, bg="#f5f6fa")
 button_frame.grid(row=6, column=0, columnspan=4, pady=(10, 0))
 
@@ -174,7 +184,7 @@ convert_file_btn.pack(side="left", padx=20)
 convert_folder_btn = tk.Button(button_frame, text="Convert Folder", font=("Segoe UI", 13, "bold"), bg="#273c75", fg="#fff", width=16, command=lambda: run_process_with_progress('folder'))
 convert_folder_btn.pack(side="left", padx=20)
 
-# Open Output Folder button (hidden by default)
+# Open Output Folder button (hidden by default) - Đặt riêng ở dòng 7
 def open_output_folder():
     import os
     import subprocess
@@ -183,7 +193,7 @@ def open_output_folder():
         os.startfile(folder)
 
 open_folder_btn = tk.Button(root, text="Open Output Folder", font=("Segoe UI", 11, "bold"), bg="#00a8ff", fg="#fff", command=open_output_folder)
-open_folder_btn.grid(row=7, column=1, pady=(10, 0))
+open_folder_btn.grid(row=7, column=0, columnspan=4, pady=(6, 0))
 open_folder_btn.grid_remove()
 
 
@@ -199,9 +209,12 @@ root.grid_columnconfigure(1, weight=1)
 import threading
 import time
 
+
 def update_progress(percent):
     progress_var.set(percent)
+    progress_percent_label.config(text=f"{int(percent)}%")
     root.update_idletasks()
+
 
 
 def run_process_with_progress(mode):
