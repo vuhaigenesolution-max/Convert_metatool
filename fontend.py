@@ -18,6 +18,8 @@ from tkinter import filedialog, messagebox, ttk
 import backend
 import json
 import os
+import sys
+from pathlib import Path
 
 def browse_file(entry, key):
     path = filedialog.askopenfilename(
@@ -77,22 +79,50 @@ def run_process_folder():
     except Exception as e:
         messagebox.showerror("Error", f"Lỗi khi xử lý thư mục: {e}")
 
+DEFAULT_SETTINGS = {"source": "", "template": "", "output": ""}
+
+
+def get_exe_dir():
+    # frozen: chạy từ file exe, không frozen: chạy từ .py
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent
+
+
+CONFIG_PATH = get_exe_dir() / "last_paths.json"
+
+
 def load_settings():
-    settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
-    if os.path.exists(settings_path):
-        with open(settings_path, "r", encoding="utf-8") as f:
+    settings_path = CONFIG_PATH
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    if settings_path.exists():
+        with settings_path.open("r", encoding="utf-8") as f:
             try:
                 return json.load(f)
             except Exception:
-                return {"source": "", "template": "", "output": ""}
-    return {"source": "", "template": "", "output": ""}
+                return DEFAULT_SETTINGS.copy()
+    # Tự tạo file mặc định nếu chưa có
+    try:
+        settings_path.write_text(
+            json.dumps(DEFAULT_SETTINGS, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+    except Exception:
+        pass
+    return DEFAULT_SETTINGS.copy()
+
 
 def save_setting(key, value):
-    settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
+    settings_path = CONFIG_PATH
     settings = load_settings()
     settings[key] = value
-    with open(settings_path, "w", encoding="utf-8") as f:
-        json.dump(settings, f, ensure_ascii=False, indent=2)
+    try:
+        settings_path.write_text(
+            json.dumps(settings, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+    except Exception as e:
+        messagebox.showerror("Error", f"Không ghi được settings: {e}")
 
 
 def update_path_hint(label_widget, path, kind):
