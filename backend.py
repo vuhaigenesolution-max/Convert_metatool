@@ -13,22 +13,22 @@ def process_excel(source_path, template_path, output_path):
     wb_source = load_workbook(source_path, data_only=True)
     sheet_name = wb_source.sheetnames[0]
     ws = wb_source[sheet_name]
-    h14_value = ws["H14"].value
-    if h14_value is None or str(h14_value).strip() == "":
-        raise ValueError("Ô H14 trong file nguồn đang trống, không thể tạo barcode header.")
-    h14_str = str(h14_value).strip()
-    parts = h14_str.split('_')
+    t14_value = ws["T14"].value
+    if t14_value is None or str(t14_value).strip() == "":
+        raise ValueError("Ô T14 trong file nguồn đang trống, không thể tạo barcode header.")
+    t14_str = str(t14_value).strip()
+    parts = t14_str.split('_')
     run_name = None
     for p in parts:
         if p.upper().startswith('R') and p[1:].isdigit():
             run_name = p.upper()
             break
     if run_name is None:
-        raise ValueError("Không tìm thấy Run name dạng Rxxx trong ô H14.")
+        raise ValueError("Không tìm thấy Run name dạng Rxxx trong ô T14.")
     if len(parts) >= 2:
         run_date = f"{parts[-2]}_{parts[-1]}"
     else:
-        run_date = h14_str
+        run_date = t14_str
     # Clean filename parts to avoid invalid characters
     cleaned_run_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in run_name)
     safe_run_name = cleaned_run_name.upper()
@@ -37,10 +37,10 @@ def process_excel(source_path, template_path, output_path):
     if safe_run_name.strip('_') == "":
         raise ValueError("Run name không hợp lệ sau khi làm sạch (safe_run_name rỗng).")
     safe_run_date = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in run_date)
-    barcode_name = h14_str
-    safe_folder_name = "".join('_' if c in '<>:"/\\|?*' else c for c in h14_str).strip()
+    barcode_name = t14_str
+    safe_folder_name = "".join('_' if c in '<>:"/\\|?*' else c for c in t14_str).strip()
     if safe_folder_name == "":
-        raise ValueError("Giá trị H14 không hợp lệ để đặt tên thư mục sau khi làm sạch.")
+        raise ValueError("Giá trị T14 không hợp lệ để đặt tên thư mục sau khi làm sạch.")
     values = []
     row = 22
     while True:
@@ -76,7 +76,9 @@ def process_excel(source_path, template_path, output_path):
     result_df['B'] = result_df['A'].map(lookup_dict_B)
     lookup_dict_C = dict(zip(df_primer.iloc[:,1], df_primer.iloc[:,2]))
     result_df['C'] = result_df['B'].map(lookup_dict_C)
+    df_bc = result_df[['B', 'C']].copy()
     wb.close()
+
 
     # 4. Tạo file CSV với 3 dòng đầu và dán result_df từ dòng 4
     rows = [
@@ -84,7 +86,7 @@ def process_excel(source_path, template_path, output_path):
         ['#misMatch1', 0],
         ['#misMatch2', 0]
     ]
-    csv_filename = f'barcode_{safe_run_name}.csv'
+    csv_filename = f'barcode.csv'
     target_folder = os.path.join(output_path, barcode_name)
     os.makedirs(target_folder, exist_ok=True)
     csv_path = os.path.join(target_folder, csv_filename)
@@ -93,7 +95,7 @@ def process_excel(source_path, template_path, output_path):
     with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(rows)
-        result_df.to_csv(f, index=False, header=False)
+        df_bc.to_csv(f, index=False, header=False)
     print(f"Đã tạo file CSV với 3 dòng đầu và dán result_df từ dòng 4 tại: {csv_path}")
     return csv_path
 
