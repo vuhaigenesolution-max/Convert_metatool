@@ -20,7 +20,8 @@ def process_excel(source_path, template_path, output_path):
     parts = t14_str.split('_')
     run_name = None
     for p in parts:
-        if p.upper().startswith('R') and p[1:].isdigit():
+        # Accept anything after the leading R (except empty), we sanitize later
+        if p.upper().startswith('R') and len(p) > 1:
             run_name = p.upper()
             break
     if run_name is None:
